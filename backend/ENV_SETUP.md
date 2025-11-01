@@ -6,9 +6,9 @@ Tạo file `.env` trong thư mục `backend/` với nội dung sau:
 
 ```env
 # Database Configuration
-DB_URL=jdbc:mysql://doctorbooking-huynhphongdat2005-ea0d.h.aivencloud.com:13499/defaultdb?ssl-mode=REQUIRED
-DB_USERNAME=avnadmin
-DB_PASSWORD=AVNS_XGrOoEvia23LMg2jPX3
+DB_URL=jdbc:mysql://your-database-host:port/database_name?ssl-mode=REQUIRED
+DB_USERNAME=your_username
+DB_PASSWORD=your_aiven_password_here
 
 # JWT Configuration
 JWT_SECRET=defaultSecretKeyForDevelopmentOnlyChangeThisInProduction123456789012345678901234567890
@@ -30,9 +30,9 @@ $env:JWT_REFRESH_EXPIRATION="604800000"
 
 ### Windows (CMD)
 ```cmd
-set DB_URL=jdbc:mysql://doctorbooking-huynhphongdat2005-ea0d.h.aivencloud.com:13499/defaultdb?ssl-mode=REQUIRED
-set DB_USERNAME=avnadmin
-set DB_PASSWORD=AVNS_XGrOoEvia23LMg2jPX3
+set DB_URL=jdbc:mysql://your-database-host:port/database_name?ssl-mode=REQUIRED
+set DB_USERNAME=your_username
+set DB_PASSWORD=your_aiven_password_here
 set JWT_SECRET=defaultSecretKeyForDevelopmentOnlyChangeThisInProduction123456789012345678901234567890
 set JWT_EXPIRATION=86400000
 set JWT_REFRESH_EXPIRATION=604800000
