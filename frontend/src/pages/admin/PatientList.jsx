@@ -6,20 +6,38 @@ import ErrorMessage from '../../components/common/ErrorMessage';
 import { formatDate } from '../../utils/formatDate';
 
 const PatientList = () => {
+  const [allPatients, setAllPatients] = useState([]);
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPatient, setSelectedPatient] = useState(null);
 
+  // Load all patients on mount
   useEffect(() => {
-    loadPatients();
-  }, [searchTerm]);
+    loadAllPatients();
+  }, []);
 
-  const loadPatients = async () => {
+  // Filter patients when searchTerm changes
+  useEffect(() => {
+    if (searchTerm.trim() === '') {
+      setPatients(allPatients);
+    } else {
+      const filtered = allPatients.filter(patient => 
+        patient.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        patient.id?.toString().includes(searchTerm) ||
+        patient.email?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setPatients(filtered);
+    }
+  }, [searchTerm, allPatients]);
+
+  const loadAllPatients = async () => {
     try {
       setLoading(true);
-      const data = await adminService.searchPatients(searchTerm);
+      // Load all patients with empty search
+      const data = await adminService.searchPatients('');
+      setAllPatients(data);
       setPatients(data);
       setError('');
     } catch (err) {

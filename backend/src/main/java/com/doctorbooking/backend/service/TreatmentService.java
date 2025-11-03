@@ -75,6 +75,13 @@ public class TreatmentService {
         treatment.setFollowUpDate(request.getFollowUpDate());
 
         treatment = treatmentRepository.save(treatment);
+        
+        // If treatment is created for an appointment, mark appointment as COMPLETED
+        if (appointment != null && appointment.getStatus() == Appointment.AppointmentStatus.CONFIRMED) {
+            appointment.setStatus(Appointment.AppointmentStatus.COMPLETED);
+            appointmentRepository.save(appointment);
+        }
+        
         return TreatmentResponse.fromEntity(treatment);
     }
 

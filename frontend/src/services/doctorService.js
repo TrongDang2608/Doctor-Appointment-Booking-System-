@@ -28,6 +28,11 @@ export const doctorService = {
     return response.data;
   },
 
+  confirmAppointment: async (id) => {
+    const response = await api.put(`/doctor/appointments/${id}/confirm`);
+    return response.data;
+  },
+
   // Treatments
   getTreatments: async () => {
     const response = await api.get('/doctor/treatments');

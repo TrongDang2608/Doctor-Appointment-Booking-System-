@@ -6,34 +6,48 @@ import ErrorMessage from '../../components/common/ErrorMessage';
 import { formatDate } from '../../utils/formatDate';
 
 const PatientSearch = () => {
+  const [allPatients, setAllPatients] = useState([]);
   const [patients, setPatients] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [patientTreatments, setPatientTreatments] = useState([]);
   const [loadingTreatments, setLoadingTreatments] = useState(false);
 
+  // Load all patients on mount
+  useEffect(() => {
+    loadAllPatients();
+  }, []);
+
+  // Filter patients when searchTerm changes
   useEffect(() => {
     if (searchTerm.trim() === '') {
-      setPatients([]);
-      return;
+      setPatients(allPatients);
+    } else {
+      const delayDebounce = setTimeout(() => {
+        const filtered = allPatients.filter(patient => 
+          patient.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          patient.id?.toString().includes(searchTerm) ||
+          patient.email?.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+        setPatients(filtered);
+      }, 300);
+
+      return () => clearTimeout(delayDebounce);
     }
-    const delayDebounce = setTimeout(() => {
-      searchPatients();
-    }, 500);
+  }, [searchTerm, allPatients]);
 
-    return () => clearTimeout(delayDebounce);
-  }, [searchTerm]);
-
-  const searchPatients = async () => {
+  const loadAllPatients = async () => {
     try {
       setLoading(true);
-      const data = await doctorService.searchPatients(searchTerm);
+      // Load all patients with empty search
+      const data = await doctorService.searchPatients('');
+      setAllPatients(data);
       setPatients(data);
       setError('');
     } catch (err) {
-      setError('Failed to search patients');
+      setError('Failed to load patients');
       console.error(err);
     } finally {
       setLoading(false);
@@ -81,13 +95,19 @@ const PatientSearch = () => {
           />
         </div>
 
-        {loading && (
+        {loading && patients.length === 0 && (
           <div style={{ textAlign: 'center', padding: '20px' }}>
-            <Loading message="Searching..." />
+            <Loading message="Loading patients..." />
           </div>
         )}
 
         {!loading && searchTerm && patients.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '40px', backgroundColor: 'white', borderRadius: '8px' }}>
+            <p>No patients found matching "{searchTerm}"</p>
+          </div>
+        )}
+
+        {!loading && !searchTerm && patients.length === 0 && (
           <div style={{ textAlign: 'center', padding: '40px', backgroundColor: 'white', borderRadius: '8px' }}>
             <p>No patients found</p>
           </div>
