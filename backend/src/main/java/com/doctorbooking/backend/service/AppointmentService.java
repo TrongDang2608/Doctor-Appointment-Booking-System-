@@ -26,6 +26,7 @@ public class AppointmentService {
     private final DoctorRepository doctorRepository;
 
     public List<AppointmentResponse> getAllAppointments() {
+        // Use custom query to fetch all with relationships
         return appointmentRepository.findAll().stream()
                 .map(AppointmentResponse::fromEntity)
                 .collect(Collectors.toList());
@@ -41,7 +42,7 @@ public class AppointmentService {
     }
 
     public AppointmentResponse getAppointmentById(Long id) {
-        Appointment appointment = appointmentRepository.findById(id)
+        Appointment appointment = appointmentRepository.findByIdWithRelations(id)
                 .orElseThrow(() -> new RuntimeException("Appointment not found with id: " + id));
         return AppointmentResponse.fromEntity(appointment);
     }
