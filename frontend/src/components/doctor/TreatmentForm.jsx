@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { doctorService } from '../../services/doctorService';
 import ErrorMessage from '../common/ErrorMessage';
+import { formatDate } from '../../utils/formatDate';
+import { formatTime } from '../../utils/formatTime';
 
-const TreatmentForm = ({ treatment, onClose, onSuccess }) => {
+const TreatmentForm = ({ treatment, appointment, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
     appointmentId: null,
     patientId: null,
@@ -18,6 +20,7 @@ const TreatmentForm = ({ treatment, onClose, onSuccess }) => {
   useEffect(() => {
     loadPatients();
     if (treatment) {
+      // Edit existing treatment
       setFormData({
         appointmentId: treatment.appointmentId || null,
         patientId: treatment.patientId,
@@ -26,8 +29,18 @@ const TreatmentForm = ({ treatment, onClose, onSuccess }) => {
         treatmentNotes: treatment.treatmentNotes || '',
         followUpDate: treatment.followUpDate || '',
       });
+    } else if (appointment) {
+      // Create treatment from appointment
+      setFormData({
+        appointmentId: appointment.id,
+        patientId: appointment.patientId,
+        diagnosis: '',
+        prescription: '',
+        treatmentNotes: '',
+        followUpDate: '',
+      });
     }
-  }, [treatment]);
+  }, [treatment, appointment]);
 
   const loadPatients = async () => {
     try {
@@ -60,11 +73,12 @@ const TreatmentForm = ({ treatment, onClose, onSuccess }) => {
           setLoading(false);
           return;
         }
-        await doctorService.createTreatment({
+        const treatmentData = {
           ...formData,
           patientId: parseInt(formData.patientId),
           appointmentId: formData.appointmentId ? parseInt(formData.appointmentId) : null,
-        });
+        };
+        await doctorService.createTreatment(treatmentData);
       }
       onSuccess();
     } catch (err) {
@@ -114,7 +128,15 @@ const TreatmentForm = ({ treatment, onClose, onSuccess }) => {
         <ErrorMessage message={error} onClose={() => setError('')} />
 
         <form onSubmit={handleSubmit}>
-          {!treatment && (
+          {appointment && (
+            <div style={{ marginBottom: '15px', padding: '15px', backgroundColor: '#e8f5e9', borderRadius: '4px' }}>
+              <div><strong>Patient:</strong> {appointment.patientName}</div>
+              <div><strong>Date:</strong> {formatDate(appointment.appointmentDate)}</div>
+              <div><strong>Time:</strong> {formatTime(appointment.appointmentTime)}</div>
+            </div>
+          )}
+          
+          {!treatment && !appointment && (
             <div style={{ marginBottom: '15px' }}>
               <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>
                 Patient *
