@@ -59,6 +59,11 @@ export const patientService = {
     return response.data;
   },
 
+  getTreatmentByAppointmentId: async (appointmentId) => {
+    const response = await api.get(`/patient/appointments/${appointmentId}/treatment`);
+    return response.data;
+  },
+
   // Feedbacks
   createFeedback: async (feedbackData) => {
     const response = await api.post('/patient/feedbacks', feedbackData);

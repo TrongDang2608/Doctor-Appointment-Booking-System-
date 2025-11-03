@@ -51,6 +51,15 @@ public class TreatmentService {
         return TreatmentResponse.fromEntity(treatment);
     }
 
+    public TreatmentResponse getTreatmentByAppointmentId(Long appointmentId) {
+        List<Treatment> treatments = treatmentRepository.findByAppointmentId(appointmentId);
+        if (treatments.isEmpty()) {
+            return null;
+        }
+        // Return the first treatment (should only be one per appointment)
+        return TreatmentResponse.fromEntity(treatments.get(0));
+    }
+
     @Transactional
     public TreatmentResponse createTreatment(Long doctorId, CreateTreatmentRequest request) {
         Doctor doctor = doctorRepository.findById(doctorId)
@@ -75,13 +84,13 @@ public class TreatmentService {
         treatment.setFollowUpDate(request.getFollowUpDate());
 
         treatment = treatmentRepository.save(treatment);
-        
+
         // If treatment is created for an appointment, mark appointment as COMPLETED
         if (appointment != null && appointment.getStatus() == Appointment.AppointmentStatus.CONFIRMED) {
             appointment.setStatus(Appointment.AppointmentStatus.COMPLETED);
             appointmentRepository.save(appointment);
         }
-        
+
         return TreatmentResponse.fromEntity(treatment);
     }
 
