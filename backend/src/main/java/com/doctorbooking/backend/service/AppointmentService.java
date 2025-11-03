@@ -117,5 +117,41 @@ public class AppointmentService {
         appointment.setStatus(Appointment.AppointmentStatus.CANCELLED);
         appointmentRepository.save(appointment);
     }
+
+    // Doctor confirms appointment (PENDING -> CONFIRMED)
+    @Transactional
+    public AppointmentResponse confirmAppointment(Long appointmentId, Long doctorId) {
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new RuntimeException("Appointment not found with id: " + appointmentId));
+
+        // Verify the appointment belongs to this doctor
+        if (!appointment.getDoctor().getId().equals(doctorId)) {
+            throw new RuntimeException("Appointment does not belong to this doctor");
+        }
+
+        // Check if appointment can be confirmed
+        if (appointment.getStatus() != Appointment.AppointmentStatus.PENDING) {
+            throw new RuntimeException("Only PENDING appointments can be confirmed");
+        }
+
+        appointment.setStatus(Appointment.AppointmentStatus.CONFIRMED);
+        appointment = appointmentRepository.save(appointment);
+        return AppointmentResponse.fromEntity(appointment);
+    }
+
+    // Mark appointment as completed (when treatment is created)
+    @Transactional
+    public void completeAppointment(Long appointmentId) {
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new RuntimeException("Appointment not found with id: " + appointmentId));
+
+        // Only CONFIRMED appointments can be completed
+        if (appointment.getStatus() != Appointment.AppointmentStatus.CONFIRMED) {
+            throw new RuntimeException("Only CONFIRMED appointments can be completed");
+        }
+
+        appointment.setStatus(Appointment.AppointmentStatus.COMPLETED);
+        appointmentRepository.save(appointment);
+    }
 }
 

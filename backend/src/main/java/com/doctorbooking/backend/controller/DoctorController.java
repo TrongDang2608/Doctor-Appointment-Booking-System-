@@ -111,6 +111,17 @@ public class DoctorController {
         }
     }
 
+    @PutMapping("/appointments/{id}/confirm")
+    public ResponseEntity<AppointmentResponse> confirmAppointment(@PathVariable Long id) {
+        try {
+            Long doctorId = getCurrentDoctorId();
+            AppointmentResponse appointment = appointmentService.confirmAppointment(id, doctorId);
+            return ResponseEntity.ok(appointment);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
     // ========== Treatment Management ==========
 
     @GetMapping("/treatments")
