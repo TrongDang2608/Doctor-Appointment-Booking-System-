@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import DoctorLayout from '../../components/doctor/DoctorLayout';
 import { doctorService } from '../../services/doctorService';
 import Loading from '../../components/common/Loading';
@@ -72,7 +72,7 @@ const DoctorAppointments = () => {
       default:
         return '#95a5a6';
     }
-  };
+  }, []);
 
   if (loading && appointments.length === 0) {
     return (

@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { adminService } from '../../services/adminService';
 import Loading from '../../components/common/Loading';
 import ErrorMessage from '../../components/common/ErrorMessage';
+import DataTable from '../../components/common/DataTable';
 import { formatDate } from '../../utils/formatDate';
 
 const PatientList = () => {
@@ -18,19 +19,22 @@ const PatientList = () => {
     loadAllPatients();
   }, []);
 
-  // Filter patients when searchTerm changes
-  useEffect(() => {
+  // Filter patients when searchTerm changes - optimized with useMemo
+  const filteredPatients = useMemo(() => {
     if (searchTerm.trim() === '') {
-      setPatients(allPatients);
-    } else {
-      const filtered = allPatients.filter(patient => 
-        patient.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        patient.id?.toString().includes(searchTerm) ||
-        patient.email?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setPatients(filtered);
+      return allPatients;
     }
+    const term = searchTerm.toLowerCase();
+    return allPatients.filter(patient => 
+      patient.fullName?.toLowerCase().includes(term) ||
+      patient.id?.toString().includes(searchTerm) ||
+      patient.email?.toLowerCase().includes(term)
+    );
   }, [searchTerm, allPatients]);
+
+  useEffect(() => {
+    setPatients(filteredPatients);
+  }, [filteredPatients]);
 
   const loadAllPatients = async () => {
     try {
@@ -68,81 +72,80 @@ const PatientList = () => {
 
   return (
     <AdminLayout>
-      <div>
-        <h1 style={{ marginBottom: '20px' }}>Patient Management</h1>
+      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 20px' }}>
+        <h1 style={{ marginBottom: '30px', fontSize: '32px', fontWeight: '600', color: '#2c3e50' }}>
+          Patient Management
+        </h1>
 
         <ErrorMessage message={error} onClose={() => setError('')} />
 
         <div style={{ marginBottom: '20px' }}>
           <input
             type="text"
-            placeholder="Search patients by name or ID..."
+            placeholder="Search patients by name, ID, or email..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             style={{
               width: '100%',
               maxWidth: '500px',
-              padding: '10px',
+              padding: '12px 16px',
               border: '1px solid #ddd',
-              borderRadius: '4px',
+              borderRadius: '6px',
               fontSize: '16px',
+              transition: 'border-color 0.2s',
             }}
+            onFocus={(e) => e.target.style.borderColor = '#3498db'}
+            onBlur={(e) => e.target.style.borderColor = '#ddd'}
           />
         </div>
 
-        {patients.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '40px', backgroundColor: 'white', borderRadius: '8px' }}>
-            <p>No patients found</p>
-          </div>
-        ) : (
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '8px',
-            overflow: 'hidden',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-          }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ backgroundColor: '#f8f9fa', borderBottom: '2px solid #dee2e6' }}>
-                  <th style={{ padding: '12px', textAlign: 'left' }}>ID</th>
-                  <th style={{ padding: '12px', textAlign: 'left' }}>Name</th>
-                  <th style={{ padding: '12px', textAlign: 'left' }}>Email</th>
-                  <th style={{ padding: '12px', textAlign: 'left' }}>Phone</th>
-                  <th style={{ padding: '12px', textAlign: 'left' }}>Date of Birth</th>
-                  <th style={{ padding: '12px', textAlign: 'center' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {patients.map((patient) => (
-                  <tr key={patient.id} style={{ borderBottom: '1px solid #dee2e6' }}>
-                    <td style={{ padding: '12px' }}>{patient.id}</td>
-                    <td style={{ padding: '12px' }}>{patient.fullName}</td>
-                    <td style={{ padding: '12px' }}>{patient.email}</td>
-                    <td style={{ padding: '12px' }}>{patient.phone || '-'}</td>
-                    <td style={{ padding: '12px' }}>
-                      {patient.dateOfBirth ? formatDate(patient.dateOfBirth) : '-'}
-                    </td>
-                    <td style={{ padding: '12px', textAlign: 'center' }}>
-                      <button
-                        onClick={() => handleViewDetails(patient.id)}
-                        style={{
-                          padding: '5px 10px',
-                          backgroundColor: '#3498db',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        View Details
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <DataTable
+          columns={[
+            { header: 'ID', accessor: 'id' },
+            { header: 'Name', accessor: 'fullName' },
+            { header: 'Email', accessor: 'email' },
+            { 
+              header: 'Phone', 
+              accessor: 'phone',
+              render: (patient) => patient.phone || '-'
+            },
+            { 
+              header: 'Date of Birth', 
+              accessor: 'dateOfBirth',
+              render: (patient) => patient.dateOfBirth ? formatDate(patient.dateOfBirth) : '-'
+            },
+            {
+              header: 'Actions',
+              align: 'center',
+              render: (patient) => (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleViewDetails(patient.id);
+                  }}
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: '#3498db',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    transition: 'background-color 0.2s',
+                  }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = '#2980b9'}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = '#3498db'}
+                >
+                  View Details
+                </button>
+              )
+            }
+          ]}
+          data={patients}
+          loading={loading && patients.length === 0}
+          emptyMessage={searchTerm ? `No patients found matching "${searchTerm}"` : 'No patients found'}
+          onRowClick={(patient) => handleViewDetails(patient.id)}
+        />
 
         {selectedPatient && (
           <PatientDetailModal patient={selectedPatient} onClose={() => setSelectedPatient(null)} />

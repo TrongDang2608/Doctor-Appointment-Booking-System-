@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import PatientLayout from '../../components/patient/PatientLayout';
 import { patientService } from '../../services/patientService';
 import Loading from '../../components/common/Loading';
+import StatCard from '../../components/common/StatCard';
+import ActionButton from '../../components/common/ActionButton';
 
 const PatientDashboard = () => {
   const [stats, setStats] = useState({
@@ -11,6 +13,7 @@ const PatientDashboard = () => {
     pendingAppointments: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     loadStats();
@@ -18,6 +21,7 @@ const PatientDashboard = () => {
 
   const loadStats = async () => {
     try {
+      setError('');
       const [appointments, treatments] = await Promise.all([
         patientService.getAppointments(),
         patientService.getTreatments(),
@@ -37,12 +41,20 @@ const PatientDashboard = () => {
         totalTreatments: treatments.length,
         pendingAppointments: pending.length,
       });
-    } catch (error) {
-      console.error('Error loading stats:', error);
+    } catch (err) {
+      console.error('Error loading stats:', err);
+      setError('Failed to load dashboard statistics');
     } finally {
       setLoading(false);
     }
   };
+
+  const statCards = useMemo(() => [
+    { label: 'Upcoming Appointments', value: stats.upcomingAppointments, color: '#3498db', icon: '📅' },
+    { label: 'Total Appointments', value: stats.totalAppointments, color: '#2ecc71', icon: '📋' },
+    { label: 'My Treatments', value: stats.totalTreatments, color: '#9b59b6', icon: '💊' },
+    { label: 'Pending Appointments', value: stats.pendingAppointments, color: '#f39c12', icon: '⏳' },
+  ], [stats]);
 
   if (loading) {
     return (
@@ -52,17 +64,25 @@ const PatientDashboard = () => {
     );
   }
 
-  const statCards = [
-    { label: 'Upcoming Appointments', value: stats.upcomingAppointments, color: '#3498db', icon: '📅' },
-    { label: 'Total Appointments', value: stats.totalAppointments, color: '#2ecc71', icon: '📋' },
-    { label: 'My Treatments', value: stats.totalTreatments, color: '#9b59b6', icon: '💊' },
-    { label: 'Pending Appointments', value: stats.pendingAppointments, color: '#f39c12', icon: '⏳' },
-  ];
-
   return (
     <PatientLayout>
-      <div>
-        <h1 style={{ marginBottom: '30px' }}>Patient Dashboard</h1>
+      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 20px' }}>
+        <h1 style={{ marginBottom: '30px', fontSize: '32px', fontWeight: '600', color: '#2c3e50' }}>
+          Patient Dashboard
+        </h1>
+        
+        {error && (
+          <div style={{
+            marginBottom: '20px',
+            padding: '12px 16px',
+            backgroundColor: '#fee',
+            color: '#c33',
+            borderRadius: '6px',
+            border: '1px solid #fcc'
+          }}>
+            {error}
+          </div>
+        )}
         
         <div style={{ 
           display: 'grid', 
@@ -71,84 +91,32 @@ const PatientDashboard = () => {
           marginBottom: '30px'
         }}>
           {statCards.map((card, index) => (
-            <div
-              key={index}
-              style={{
-                backgroundColor: 'white',
-                padding: '25px',
-                borderRadius: '8px',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                borderLeft: `4px solid ${card.color}`,
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <p style={{ margin: 0, color: '#666', fontSize: '14px' }}>{card.label}</p>
-                  <h2 style={{ margin: '10px 0 0 0', fontSize: '32px', color: card.color }}>
-                    {card.value}
-                  </h2>
-                </div>
-                <div style={{ fontSize: '40px' }}>{card.icon}</div>
-              </div>
-            </div>
+            <StatCard key={index} {...card} />
           ))}
         </div>
 
-        <div style={{ backgroundColor: 'white', padding: '25px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-          <h2 style={{ marginBottom: '15px' }}>Quick Actions</h2>
+        <div style={{ 
+          backgroundColor: 'white', 
+          padding: '30px', 
+          borderRadius: '8px', 
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+        }}>
+          <h2 style={{ marginBottom: '20px', fontSize: '24px', fontWeight: '600', color: '#2c3e50' }}>
+            Quick Actions
+          </h2>
           <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
-            <a
-              href="/patient/booking"
-              style={{
-                padding: '12px 24px',
-                backgroundColor: '#2ecc71',
-                color: 'white',
-                textDecoration: 'none',
-                borderRadius: '4px',
-                display: 'inline-block',
-              }}
-            >
+            <ActionButton to="/patient/booking" color="#2ecc71">
               Book Appointment
-            </a>
-            <a
-              href="/patient/history"
-              style={{
-                padding: '12px 24px',
-                backgroundColor: '#3498db',
-                color: 'white',
-                textDecoration: 'none',
-                borderRadius: '4px',
-                display: 'inline-block',
-              }}
-            >
+            </ActionButton>
+            <ActionButton to="/patient/history" color="#3498db">
               View History
-            </a>
-            <a
-              href="/patient/doctors"
-              style={{
-                padding: '12px 24px',
-                backgroundColor: '#9b59b6',
-                color: 'white',
-                textDecoration: 'none',
-                borderRadius: '4px',
-                display: 'inline-block',
-              }}
-            >
+            </ActionButton>
+            <ActionButton to="/patient/doctors" color="#9b59b6">
               Find Doctors
-            </a>
-            <a
-              href="/patient/treatments"
-              style={{
-                padding: '12px 24px',
-                backgroundColor: '#f39c12',
-                color: 'white',
-                textDecoration: 'none',
-                borderRadius: '4px',
-                display: 'inline-block',
-              }}
-            >
+            </ActionButton>
+            <ActionButton to="/patient/treatments" color="#f39c12">
               My Treatments
-            </a>
+            </ActionButton>
           </div>
         </div>
       </div>

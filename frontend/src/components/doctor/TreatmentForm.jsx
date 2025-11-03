@@ -157,7 +157,16 @@ const TreatmentForm = ({ treatment, appointment, onClose, onSuccess }) => {
                   </select>
                 </div>
             )}
-
+        <form onSubmit={handleSubmit}>
+          {appointment && (
+            <div style={{ marginBottom: '15px', padding: '15px', backgroundColor: '#e8f5e9', borderRadius: '4px' }}>
+              <div><strong>Patient:</strong> {appointment.patientName}</div>
+              <div><strong>Date:</strong> {formatDate(appointment.appointmentDate)}</div>
+              <div><strong>Time:</strong> {formatTime(appointment.appointmentTime)}</div>
+            </div>
+          )}
+          
+          {!treatment && !appointment && (
             <div style={{ marginBottom: '15px' }}>
               <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>
                 Diagnosis

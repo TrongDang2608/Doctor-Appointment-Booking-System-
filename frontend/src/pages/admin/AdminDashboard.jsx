@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { adminService } from '../../services/adminService';
 import Loading from '../../components/common/Loading';
+import StatCard from '../../components/common/StatCard';
+import ActionButton from '../../components/common/ActionButton';
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({
@@ -11,6 +13,7 @@ const AdminDashboard = () => {
     pendingFeedbacks: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     loadStats();
@@ -18,6 +21,7 @@ const AdminDashboard = () => {
 
   const loadStats = async () => {
     try {
+      setError('');
       const [doctors, patients, appointments, feedbacks] = await Promise.all([
         adminService.getAllDoctors(),
         adminService.searchPatients(),
@@ -31,12 +35,20 @@ const AdminDashboard = () => {
         totalAppointments: appointments.length,
         pendingFeedbacks: feedbacks.length,
       });
-    } catch (error) {
-      console.error('Error loading stats:', error);
+    } catch (err) {
+      console.error('Error loading stats:', err);
+      setError('Failed to load dashboard statistics');
     } finally {
       setLoading(false);
     }
   };
+
+  const statCards = useMemo(() => [
+    { label: 'Total Doctors', value: stats.totalDoctors, color: '#3498db', icon: '👨‍⚕️' },
+    { label: 'Total Patients', value: stats.totalPatients, color: '#2ecc71', icon: '👥' },
+    { label: 'Total Appointments', value: stats.totalAppointments, color: '#f39c12', icon: '📅' },
+    { label: 'Pending Feedbacks', value: stats.pendingFeedbacks, color: '#e74c3c', icon: '💬' },
+  ], [stats]);
 
   if (loading) {
     return (
@@ -46,17 +58,25 @@ const AdminDashboard = () => {
     );
   }
 
-  const statCards = [
-    { label: 'Total Doctors', value: stats.totalDoctors, color: '#3498db', icon: '👨‍⚕️' },
-    { label: 'Total Patients', value: stats.totalPatients, color: '#2ecc71', icon: '👥' },
-    { label: 'Total Appointments', value: stats.totalAppointments, color: '#f39c12', icon: '📅' },
-    { label: 'Pending Feedbacks', value: stats.pendingFeedbacks, color: '#e74c3c', icon: '💬' },
-  ];
-
   return (
     <AdminLayout>
-      <div>
-        <h1 style={{ marginBottom: '30px' }}>Admin Dashboard</h1>
+      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 20px' }}>
+        <h1 style={{ marginBottom: '30px', fontSize: '32px', fontWeight: '600', color: '#2c3e50' }}>
+          Admin Dashboard
+        </h1>
+        
+        {error && (
+          <div style={{
+            marginBottom: '20px',
+            padding: '12px 16px',
+            backgroundColor: '#fee',
+            color: '#c33',
+            borderRadius: '6px',
+            border: '1px solid #fcc'
+          }}>
+            {error}
+          </div>
+        )}
         
         <div style={{ 
           display: 'grid', 
@@ -65,84 +85,32 @@ const AdminDashboard = () => {
           marginBottom: '30px'
         }}>
           {statCards.map((card, index) => (
-            <div
-              key={index}
-              style={{
-                backgroundColor: 'white',
-                padding: '25px',
-                borderRadius: '8px',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                borderLeft: `4px solid ${card.color}`,
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <p style={{ margin: 0, color: '#666', fontSize: '14px' }}>{card.label}</p>
-                  <h2 style={{ margin: '10px 0 0 0', fontSize: '32px', color: card.color }}>
-                    {card.value}
-                  </h2>
-                </div>
-                <div style={{ fontSize: '40px' }}>{card.icon}</div>
-              </div>
-            </div>
+            <StatCard key={index} {...card} />
           ))}
         </div>
 
-        <div style={{ backgroundColor: 'white', padding: '25px', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-          <h2 style={{ marginBottom: '15px' }}>Quick Actions</h2>
+        <div style={{ 
+          backgroundColor: 'white', 
+          padding: '30px', 
+          borderRadius: '8px', 
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+        }}>
+          <h2 style={{ marginBottom: '20px', fontSize: '24px', fontWeight: '600', color: '#2c3e50' }}>
+            Quick Actions
+          </h2>
           <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
-            <a
-              href="/admin/doctors"
-              style={{
-                padding: '12px 24px',
-                backgroundColor: '#3498db',
-                color: 'white',
-                textDecoration: 'none',
-                borderRadius: '4px',
-                display: 'inline-block',
-              }}
-            >
+            <ActionButton to="/admin/doctors" color="#3498db">
               Manage Doctors
-            </a>
-            <a
-              href="/admin/patients"
-              style={{
-                padding: '12px 24px',
-                backgroundColor: '#2ecc71',
-                color: 'white',
-                textDecoration: 'none',
-                borderRadius: '4px',
-                display: 'inline-block',
-              }}
-            >
+            </ActionButton>
+            <ActionButton to="/admin/patients" color="#2ecc71">
               View Patients
-            </a>
-            <a
-              href="/admin/appointments"
-              style={{
-                padding: '12px 24px',
-                backgroundColor: '#f39c12',
-                color: 'white',
-                textDecoration: 'none',
-                borderRadius: '4px',
-                display: 'inline-block',
-              }}
-            >
+            </ActionButton>
+            <ActionButton to="/admin/appointments" color="#f39c12">
               View Appointments
-            </a>
-            <a
-              href="/admin/feedbacks"
-              style={{
-                padding: '12px 24px',
-                backgroundColor: '#e74c3c',
-                color: 'white',
-                textDecoration: 'none',
-                borderRadius: '4px',
-                display: 'inline-block',
-              }}
-            >
+            </ActionButton>
+            <ActionButton to="/admin/feedbacks" color="#e74c3c">
               View Feedbacks
-            </a>
+            </ActionButton>
           </div>
         </div>
       </div>

@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import PatientLayout from '../../components/patient/PatientLayout';
 import { patientService } from '../../services/patientService';
 import Loading from '../../components/common/Loading';
 import ErrorMessage from '../../components/common/ErrorMessage';
+import DataTable from '../../components/common/DataTable';
 import { formatDate, formatDateTime } from '../../utils/formatDate';
 import { formatTime } from '../../utils/formatTime';
 
@@ -45,7 +47,7 @@ const BookingHistory = () => {
     }
   };
 
-  const getStatusColor = (status) => {
+  const getStatusColor = useMemo(() => (status) => {
     switch (status) {
       case 'PENDING':
         return '#f39c12';
@@ -58,7 +60,7 @@ const BookingHistory = () => {
       default:
         return '#95a5a6';
     }
-  };
+  }, []);
 
   const canCancel = (appointment) => {
     return appointment.status !== 'CANCELLED' && appointment.status !== 'COMPLETED';
@@ -74,8 +76,10 @@ const BookingHistory = () => {
 
   return (
     <PatientLayout>
-      <div>
-        <h1 style={{ marginBottom: '20px' }}>Booking History</h1>
+      <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 20px' }}>
+        <h1 style={{ marginBottom: '30px', fontSize: '32px', fontWeight: '600', color: '#2c3e50' }}>
+          Booking History
+        </h1>
 
         <ErrorMessage message={error} onClose={() => setError('')} />
         {success && (
@@ -83,97 +87,128 @@ const BookingHistory = () => {
             padding: '15px',
             backgroundColor: '#d4edda',
             border: '1px solid #c3e6cb',
-            borderRadius: '4px',
+            borderRadius: '6px',
             color: '#155724',
-            marginBottom: '15px',
+            marginBottom: '20px',
           }}>
             {success}
           </div>
         )}
 
-        {appointments.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '40px', backgroundColor: 'white', borderRadius: '8px' }}>
-            <p>No appointments found</p>
-            <a
-              href="/patient/booking"
-              style={{
-                display: 'inline-block',
-                marginTop: '15px',
-                padding: '10px 20px',
-                backgroundColor: '#2ecc71',
-                color: 'white',
-                textDecoration: 'none',
-                borderRadius: '4px',
-              }}
-            >
-              Book New Appointment
-            </a>
-          </div>
-        ) : (
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '8px',
-            overflow: 'hidden',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-          }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ backgroundColor: '#f8f9fa', borderBottom: '2px solid #dee2e6' }}>
-                  <th style={{ padding: '12px', textAlign: 'left' }}>Doctor</th>
-                  <th style={{ padding: '12px', textAlign: 'left' }}>Date</th>
-                  <th style={{ padding: '12px', textAlign: 'left' }}>Time</th>
-                  <th style={{ padding: '12px', textAlign: 'left' }}>Status</th>
-                  <th style={{ padding: '12px', textAlign: 'left' }}>Notes</th>
-                  <th style={{ padding: '12px', textAlign: 'center' }}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {appointments.map((appointment) => (
-                  <tr key={appointment.id} style={{ borderBottom: '1px solid #dee2e6' }}>
-                    <td style={{ padding: '12px' }}>
-                      <div>{appointment.doctorName}</div>
-                      <div style={{ fontSize: '12px', color: '#666' }}>{appointment.doctorSpecialization}</div>
-                    </td>
-                    <td style={{ padding: '12px' }}>{formatDate(appointment.appointmentDate)}</td>
-                    <td style={{ padding: '12px' }}>{formatTime(appointment.appointmentTime)}</td>
-                    <td style={{ padding: '12px' }}>
-                      <span style={{
-                        padding: '4px 8px',
-                        borderRadius: '4px',
-                        backgroundColor: getStatusColor(appointment.status) + '20',
-                        color: getStatusColor(appointment.status),
-                        fontSize: '12px',
-                        fontWeight: '500',
-                      }}>
-                        {appointment.status}
-                      </span>
-                    </td>
-                    <td style={{ padding: '12px', maxWidth: '200px', fontSize: '14px' }}>
-                      {appointment.notes || '-'}
-                    </td>
-                    <td style={{ padding: '12px', textAlign: 'center' }}>
-                      {canCancel(appointment) && (
-                        <button
-                          onClick={() => handleCancel(appointment.id)}
-                          style={{
-                            padding: '5px 10px',
-                            backgroundColor: '#e74c3c',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          Cancel
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <DataTable
+          columns={[
+            {
+              header: 'Doctor',
+              accessor: 'doctorName',
+              render: (appointment) => (
+                <div>
+                  <div style={{ fontWeight: '500' }}>{appointment.doctorName}</div>
+                  <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+                    {appointment.doctorSpecialization}
+                  </div>
+                </div>
+              )
+            },
+            {
+              header: 'Date',
+              accessor: 'appointmentDate',
+              render: (appointment) => formatDate(appointment.appointmentDate)
+            },
+            {
+              header: 'Time',
+              accessor: 'appointmentTime',
+              render: (appointment) => formatTime(appointment.appointmentTime)
+            },
+            {
+              header: 'Status',
+              accessor: 'status',
+              render: (appointment) => {
+                const color = getStatusColor(appointment.status);
+                return (
+                  <span style={{
+                    padding: '6px 12px',
+                    borderRadius: '4px',
+                    backgroundColor: color + '20',
+                    color: color,
+                    fontSize: '12px',
+                    fontWeight: '500',
+                  }}>
+                    {appointment.status}
+                  </span>
+                );
+              }
+            },
+            {
+              header: 'Notes',
+              accessor: 'notes',
+              render: (appointment) => (
+                <div style={{ maxWidth: '200px', fontSize: '14px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {appointment.notes || '-'}
+                </div>
+              )
+            },
+            {
+              header: 'Actions',
+              align: 'center',
+              render: (appointment) => (
+                canCancel(appointment) ? (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCancel(appointment.id);
+                    }}
+                    style={{
+                      padding: '6px 12px',
+                      backgroundColor: '#e74c3c',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      transition: 'background-color 0.2s',
+                    }}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = '#c0392b'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = '#e74c3c'}
+                  >
+                    Cancel
+                  </button>
+                ) : (
+                  <span style={{ fontSize: '12px', color: '#666' }}>-</span>
+                )
+              )
+            }
+          ]}
+          data={appointments}
+          loading={loading && appointments.length === 0}
+          emptyMessage={
+            <div style={{ textAlign: 'center', padding: '20px' }}>
+              <p style={{ marginBottom: '15px' }}>No appointments found</p>
+              <Link
+                to="/patient/booking"
+                style={{
+                  display: 'inline-block',
+                  padding: '12px 24px',
+                  backgroundColor: '#2ecc71',
+                  color: 'white',
+                  textDecoration: 'none',
+                  borderRadius: '6px',
+                  fontWeight: '500',
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = '#27ae60';
+                  e.target.style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = '#2ecc71';
+                  e.target.style.transform = 'translateY(0)';
+                }}
+              >
+                Book New Appointment
+              </Link>
+            </div>
+          }
+        />
       </div>
     </PatientLayout>
   );
