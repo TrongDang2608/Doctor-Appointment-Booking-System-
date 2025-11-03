@@ -56,7 +56,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             logger.info("JWT Filter - Extracted username from token: {}", username);
             logger.info("JWT Filter - Request URI: {}", request.getRequestURI());
             
-            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            // Clear existing authentication to ensure stateless behavior
+            // This allows multiple users/roles to login simultaneously
+            SecurityContextHolder.clearContext();
+            
+            if (username != null) {
                 UserDetails userDetails = userService.loadUserByUsername(username);
                 logger.info("JWT Filter - Loaded userDetails for username: {}", username);
                 
@@ -82,17 +86,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     logger.info("JWT Filter - Authentication token set in SecurityContext");
                 } else {
                     logger.warn("JWT Filter - Token validation failed for user: {}", username);
+                    // Clear context if token is invalid
+                    SecurityContextHolder.clearContext();
                 }
             } else {
-                if (username == null) {
-                    logger.warn("JWT Filter - Username is null");
-                } else {
-                    logger.info("JWT Filter - Authentication already exists in SecurityContext");
-                }
+                logger.warn("JWT Filter - Username is null");
+                SecurityContextHolder.clearContext();
             }
         } catch (Exception e) {
-            // Token invalid, continue without authentication
+            // Token invalid, clear context and continue without authentication
             logger.error("JWT Filter - Authentication error: {}", e.getMessage(), e);
+            SecurityContextHolder.clearContext();
         }
         
         filterChain.doFilter(request, response);

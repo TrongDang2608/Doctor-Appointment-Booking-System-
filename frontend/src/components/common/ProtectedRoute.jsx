@@ -1,6 +1,7 @@
 import { Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { authService } from '../../services/authService';
 
 const ProtectedRoute = ({ children, requiredRole }) => {
   const { isAuthenticated, user, loading } = useAuth();
@@ -38,21 +39,32 @@ const ProtectedRoute = ({ children, requiredRole }) => {
     );
   }
 
-  if (!isAuthenticated) {
-    logPersistent('ProtectedRoute: Not authenticated, redirecting to login');
+  // Check authentication for the specific role from localStorage
+  // This allows multiple roles to be logged in simultaneously
+  const roleSpecificUser = requiredRole ? authService.getCurrentUser(requiredRole) : null;
+  const roleSpecificToken = requiredRole ? authService.getToken(requiredRole) : null;
+  const isRoleAuthenticated = roleSpecificUser && roleSpecificToken;
+
+  if (!isRoleAuthenticated) {
+    logPersistent('ProtectedRoute: Not authenticated for required role, redirecting to login', { 
+      requiredRole,
+      hasRoleUser: !!roleSpecificUser,
+      hasRoleToken: !!roleSpecificToken
+    });
     return <Navigate to="/login" replace />;
   }
 
-  if (requiredRole && user?.role !== requiredRole) {
+  // Verify role matches (double check)
+  if (requiredRole && roleSpecificUser?.role !== requiredRole) {
     logPersistent('ProtectedRoute: Role mismatch - redirecting to unauthorized', { 
-      userRole: user?.role, 
+      userRole: roleSpecificUser?.role, 
       requiredRole 
     });
     return <Navigate to="/unauthorized" replace />;
   }
 
   logPersistent('ProtectedRoute: Access granted', { 
-    userRole: user?.role, 
+    userRole: roleSpecificUser?.role, 
     requiredRole 
   });
   return children;

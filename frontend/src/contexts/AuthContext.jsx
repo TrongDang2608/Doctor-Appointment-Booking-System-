@@ -3,17 +3,40 @@ import { authService } from '../services/authService';
 
 const AuthContext = createContext(null);
 
+// Helper to determine role from pathname
+const getRoleFromPathname = (pathname) => {
+  if (pathname.startsWith('/admin')) return 'ADMIN';
+  if (pathname.startsWith('/doctor')) return 'DOCTOR';
+  if (pathname.startsWith('/patient')) return 'PATIENT';
+  return null;
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is logged in on mount
-    const currentUser = authService.getCurrentUser();
-    console.log('AuthContext mount - currentUser from localStorage:', currentUser);
+    // Determine role from current pathname
+    const pathname = window.location.pathname;
+    const roleFromPath = getRoleFromPathname(pathname);
+    
+    // Try to load user for specific role first, then fallback
+    let currentUser = null;
+    if (roleFromPath) {
+      currentUser = authService.getCurrentUser(roleFromPath);
+      if (currentUser) {
+        console.log(`AuthContext mount - Loaded ${roleFromPath} user from localStorage:`, currentUser);
+      }
+    }
+    
+    // Fallback: try to load any user
+    if (!currentUser) {
+      currentUser = authService.getCurrentUser();
+      console.log('AuthContext mount - Loaded user from localStorage (fallback):', currentUser);
+    }
+    
     if (currentUser) {
       setUser(currentUser);
-      console.log('AuthContext - User restored from localStorage:', currentUser);
     } else {
       console.log('AuthContext - No user found in localStorage');
     }
@@ -63,9 +86,19 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    authService.logout();
-    setUser(null);
+  const logout = (role = null) => {
+    // If role is provided, only logout that role
+    // Otherwise logout all roles
+    if (role) {
+      authService.logout(role);
+      // Only clear user state if current user matches the role
+      if (user?.role === role) {
+        setUser(null);
+      }
+    } else {
+      authService.logout();
+      setUser(null);
+    }
   };
 
   const value = {
