@@ -174,6 +174,28 @@ public class PatientController {
         }
     }
 
+    @GetMapping("/appointments/{id}/treatment")
+    public ResponseEntity<TreatmentResponse> getTreatmentByAppointmentId(@PathVariable Long id) {
+        try {
+            AppointmentResponse appointment = appointmentService.getAppointmentById(id);
+            Long patientId = getCurrentPatientId();
+
+            // Verify the appointment belongs to this patient
+            if (!appointment.getPatientId().equals(patientId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+
+            TreatmentResponse treatment = treatmentService.getTreatmentByAppointmentId(id);
+            if (treatment == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            return ResponseEntity.ok(treatment);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
     // ========== Feedback ==========
 
     @PostMapping("/feedbacks")
