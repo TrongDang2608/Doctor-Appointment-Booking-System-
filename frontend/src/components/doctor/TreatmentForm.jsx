@@ -157,16 +157,7 @@ const TreatmentForm = ({ treatment, appointment, onClose, onSuccess }) => {
                   </select>
                 </div>
             )}
-        <form onSubmit={handleSubmit}>
-          {appointment && (
-            <div style={{ marginBottom: '15px', padding: '15px', backgroundColor: '#e8f5e9', borderRadius: '4px' }}>
-              <div><strong>Patient:</strong> {appointment.patientName}</div>
-              <div><strong>Date:</strong> {formatDate(appointment.appointmentDate)}</div>
-              <div><strong>Time:</strong> {formatTime(appointment.appointmentTime)}</div>
-            </div>
-          )}
-          
-          {!treatment && !appointment && (
+
             <div style={{ marginBottom: '15px' }}>
               <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>
                 Diagnosis
@@ -176,6 +167,7 @@ const TreatmentForm = ({ treatment, appointment, onClose, onSuccess }) => {
                   value={formData.diagnosis}
                   onChange={handleChange}
                   rows="3"
+                  placeholder="Enter diagnosis..."
                   style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '4px', fontFamily: 'inherit' }}
               />
             </div>
@@ -189,9 +181,11 @@ const TreatmentForm = ({ treatment, appointment, onClose, onSuccess }) => {
                   value={formData.prescription}
                   onChange={handleChange}
                   rows="3"
+                  placeholder="Enter prescription..."
                   style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '4px', fontFamily: 'inherit' }}
               />
             </div>
+
             <div style={{ marginBottom: '15px' }}>
               <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>
                 Treatment Notes
@@ -201,6 +195,7 @@ const TreatmentForm = ({ treatment, appointment, onClose, onSuccess }) => {
                   value={formData.treatmentNotes}
                   onChange={handleChange}
                   rows="4"
+                  placeholder="Enter treatment notes..."
                   style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '4px', fontFamily: 'inherit' }}
               />
             </div>

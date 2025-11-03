@@ -13,11 +13,23 @@ import java.util.Optional;
 
 @Repository
 public interface AppointmentRepository extends JpaRepository<Appointment, Long> {
-    List<Appointment> findByPatientId(Long patientId);
-    List<Appointment> findByDoctorId(Long doctorId);
-    List<Appointment> findByAppointmentDate(LocalDate date);
+    // Use JOIN FETCH to eagerly load patient and doctor
+    @Query("SELECT DISTINCT a FROM Appointment a JOIN FETCH a.patient JOIN FETCH a.doctor WHERE a.patient.id = :patientId")
+    List<Appointment> findByPatientId(@Param("patientId") Long patientId);
     
-    @Query("SELECT a FROM Appointment a WHERE a.doctor.id = :doctorId AND " +
+    @Query("SELECT DISTINCT a FROM Appointment a JOIN FETCH a.patient JOIN FETCH a.doctor WHERE a.doctor.id = :doctorId")
+    List<Appointment> findByDoctorId(@Param("doctorId") Long doctorId);
+    
+    @Query("SELECT DISTINCT a FROM Appointment a JOIN FETCH a.patient JOIN FETCH a.doctor")
+    List<Appointment> findAll();
+    
+    @Query("SELECT DISTINCT a FROM Appointment a JOIN FETCH a.patient JOIN FETCH a.doctor WHERE a.id = :id")
+    Optional<Appointment> findByIdWithRelations(@Param("id") Long id);
+    
+    @Query("SELECT a FROM Appointment a JOIN FETCH a.patient JOIN FETCH a.doctor WHERE a.appointmentDate = :date")
+    List<Appointment> findByAppointmentDate(@Param("date") LocalDate date);
+    
+    @Query("SELECT a FROM Appointment a JOIN FETCH a.patient JOIN FETCH a.doctor WHERE a.doctor.id = :doctorId AND " +
            "a.appointmentDate = :date AND a.appointmentTime = :time AND " +
            "a.status != 'CANCELLED'")
     Optional<Appointment> findExistingAppointment(
@@ -26,11 +38,11 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
         @Param("time") LocalTime time
     );
     
-    @Query("SELECT a FROM Appointment a WHERE a.doctor.id = :doctorId AND " +
+    @Query("SELECT a FROM Appointment a JOIN FETCH a.patient JOIN FETCH a.doctor WHERE a.doctor.id = :doctorId AND " +
            "a.appointmentDate = :date")
     List<Appointment> findByDoctorAndDate(@Param("doctorId") Long doctorId, @Param("date") LocalDate date);
     
-    @Query("SELECT a FROM Appointment a WHERE a.patient.id = :patientId ORDER BY a.appointmentDate DESC, a.appointmentTime DESC")
+    @Query("SELECT a FROM Appointment a JOIN FETCH a.patient JOIN FETCH a.doctor WHERE a.patient.id = :patientId ORDER BY a.appointmentDate DESC, a.appointmentTime DESC")
     List<Appointment> findByPatientIdOrderByDateDesc(@Param("patientId") Long patientId);
 }
 

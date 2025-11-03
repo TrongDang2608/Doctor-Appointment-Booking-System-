@@ -72,7 +72,7 @@ const DoctorAppointments = () => {
       default:
         return '#95a5a6';
     }
-  }, []);
+  };
 
   if (loading && appointments.length === 0) {
     return (
